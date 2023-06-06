@@ -16,18 +16,33 @@ class Slider
 
     private $data = null;
 
+    private $conn = null;
 
-    public function __construct()
-    {
 
-        $dataSlides = file_get_contents(Config::datasource() . 'slideritems.json');
-        $this->data = json_decode($dataSlides);
+    public function __construct(){
+
+        if(Config::$driver == 'mysql'){
+            $this->connectdb();
+        }elseif(Config::$driver == 'json'){
+            $this->connectjson();
+        }      
+
     }
+
 
     public function index()
     {
-
         return $this->data;
+    }
+
+    public function index2()
+    {
+        $stmt = $this->conn->prepare('SELECT * FROM sliders');
+        $stmt->execute();
+        // Fetch the records so we can display them in our template.
+        $stmt->setFetchMode(\PDO::FETCH_CLASS, "\BITM\SEIP12\Slider");
+        $sliders = $stmt->fetchAll();
+        return $this->data = $sliders;
     }
 
     public function create()
@@ -36,17 +51,50 @@ class Slider
 
     public function store($slider)
     {
-
         $slider = $this->prepare($slider);
         $this->data[] = (object) (array) $slider; // data is a slider object
         return $this->insert();
     }
 
+    public function store2($slider){
+            
+        // prepare the sql; INSERT
+        $stmt = $this->conn->prepare('INSERT INTO `sliders`  (`uuid`, `title`, `src`, `alt`, `caption`, `created_at`, `updated_at`, `created_by`, `updated_by`) 
+        VALUES (:uuid, :title, :path, :alt, :caption, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :created_by, :updated_by)');
+        
+        $stmt->bindParam(':uuid', $slider->uuid, \PDO::PARAM_STR);
+        $stmt->bindParam(':title',$slider->title, \PDO::PARAM_STR);
+        $stmt->bindParam(':path', $slider->src, \PDO::PARAM_STR);
+        $stmt->bindParam(':alt', $slider->alt, \PDO::PARAM_STR);
+        $stmt->bindParam(':caption', $slider->caption, \PDO::PARAM_STR);
+        $stmt->bindParam(':created_by', $slider->created_by, \PDO::PARAM_STR);
+        $stmt->bindParam(':updated_by', $slider->updated_by, \PDO::PARAM_STR);
+
+        // insert the data to database : Execute
+
+        try{
+            $stmt->execute();
+            return true;
+        }catch(\Exception $e){
+            echo $e->getMessage();
+            return false;
+        }
+}
+
 
     public function show($id)
     {
-
         return $this->find($id);
+    }
+
+    public function show2($id){
+
+        $stmt = $this->conn->prepare('SELECT * FROM sliders WHERE id = :id');
+        $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->setFetchMode(\PDO::FETCH_CLASS, "\BITM\SEIP12\Slider");
+        return $slider = $stmt->fetch();
+       
     }
 
     public function edit($id = null)
@@ -185,4 +233,22 @@ class Slider
     public function findAll()
     {
     }
+
+    private function connectdb()
+    {     
+        try {
+            
+                $this->conn = new \PDO('mysql:host=' . Config::DB_HOST . ';dbname=' . Config::DB_NAME . ';charset=utf8', Config::DB_USER, Config::DB_PASSWORD);
+        } catch (\PDOException $e) {
+            // If there is an error with the connection, stop the script and display the error.
+            echo $e->getMessage();
+            //echo 'Failed to connect to database!';
+        }
+    }
+
+    private function connectjson(){
+        $dataSlides = file_get_contents(Config::datasource().'slideritems.json');
+        $this->data = json_decode($dataSlides);
+    }
+
 }

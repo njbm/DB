@@ -3,6 +3,7 @@
 
 use \BITM\SEIP12\Slider;
 use \BITM\SEIP12\Utility\Utility;
+use \BITM\SEIP12\Config;
 
 $filename = $_FILES['picture']['name']; // if you want to keep the name as is
 $filename = uniqid() . "_" . $_FILES['picture']['name']; // if you want to keep the name as is
@@ -22,8 +23,15 @@ $slider->title = Utility::sanitize($_POST['title']);
 $slider->caption = Utility::sanitize($_POST['caption']);
 $slider->src = $src;
 
-$result = $slider->store($slider);
+$slider->created_by = "created-sdf";
+$slider->updated_by = "created-sdf";
+$slider->uuid = Utility::uuid();
 
+if(Config::$driver == 'mysql'){
+    $result = $slider->store2($slider);
+}elseif(Config::$driver == 'json'){
+    $result = $slider->store($slider);
+}
 if ($result) {
     redirect("slider_index.php");
 } else {

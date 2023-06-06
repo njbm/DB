@@ -3,7 +3,8 @@
 	use \BITM\SEIP12\Slider;
 
 	$slider = new Slider();
-	$slides = $slider->index();
+	// $slides = $slider->index();
+	$slides = $slider->index2();
 ?>
 
 
