@@ -10,17 +10,7 @@
 //         'caption'=>'This the slide number 2',
 //         'alt'=>'slide2' ];
 
-// $slide3 =['src'=> 'assets/images/slider/5.jpg',
-//         'title'=> 'Slide 3',
-//         'caption'=> 'This the slide number 3',  
-//         'alt'=>'' ];
-
-// $slide4  =['src'=> 'assets/images/slider/9.jpg',
-//         'title'=>'Slide 4',
-//         'caption'=> 'This the slide number 4',
-//         'alt'=>'' ];
-
-// $slides=[$slide1,$slide2,$slide3,$slide4];
+// $slides=[$slide1,$slide2];
 
 
     $dataSlides = file_get_contents($datasource . DIRECTORY_SEPARATOR . 'slideritems.json');

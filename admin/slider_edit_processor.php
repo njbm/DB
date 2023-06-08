@@ -37,6 +37,7 @@ $id = Utility::sanitize($_POST['id']);
 $slider = new Slider();
 $slide = $slider->find($id);
 
+
 $slide->alt = Utility::sanitize($_POST['alt']);
 $slide->title = Utility::sanitize($_POST['title']);
 $slide->caption = Utility::sanitize($_POST['caption']);

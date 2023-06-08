@@ -15,7 +15,9 @@ class Slider
     public $caption = null;
 
     private $data = null;
+
     private $conn = null;
+
 
     public function __construct(){
 
@@ -24,19 +26,37 @@ class Slider
         }elseif(Config::$driver == 'json'){
             $this->connectjson();
         }      
+
     }
 
+
     public function index()
+    {
+        return $this->data;
+    }
+
+    public function index2()
     {
         $stmt = $this->conn->prepare('SELECT * FROM sliders');
         $stmt->execute();
         // Fetch the records so we can display them in our template.
         $stmt->setFetchMode(\PDO::FETCH_CLASS, "\BITM\SEIP12\Slider");
         $sliders = $stmt->fetchAll();
-        return $this->conn = $sliders;
+        return $this->data = $sliders;
     }
 
-    public function store($slider){
+    public function create()
+    {
+    }
+
+    public function store($slider)
+    {
+        $slider = $this->prepare($slider);
+        $this->data[] = (object) (array) $slider; // data is a slider object
+        return $this->insert();
+    }
+
+    public function store2($slider){
             
         // prepare the sql; INSERT
         $stmt = $this->conn->prepare('INSERT INTO `sliders`  (`uuid`, `title`, `src`, `alt`, `caption`, `created_at`, `updated_at`, `created_by`, `updated_by`) 
@@ -51,6 +71,7 @@ class Slider
         $stmt->bindParam(':updated_by', $slider->updated_by, \PDO::PARAM_STR);
 
         // insert the data to database : Execute
+
         try{
             $stmt->execute();
             return true;
@@ -60,18 +81,45 @@ class Slider
         }
     }
 
+
     public function show($id)
     {
         return $this->find($id);
     }
 
+    public function show2($id){
+
+        $stmt = $this->conn->prepare('SELECT * FROM sliders WHERE id = :id');
+        $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt->setFetchMode(\PDO::FETCH_CLASS, "\BITM\SEIP12\Slider");
+        return $slider = $stmt->fetch();
+       
+    }
 
     public function edit($id = null)
     {
         return $this->find($id);
     }
 
-    public function update($slider) {
+    public function edit2($id = null)
+    {
+        return $this->find2($id);
+    }
+
+    public function update($slider)
+    {
+        $slider = $this->prepare($slider);
+        foreach ($this->data as $key => $aslide) {
+            if ($aslide->id == $slider->id)
+                break;
+        }
+        $this->data[$key] =  $slider;
+        return $this->insert();
+    }
+
+
+    public function update2($slider) {
         // Prepare the SQL statement
         $stmt = $this->conn->prepare('UPDATE `sliders` SET  `title` = :title, `src` = :path,
          `alt` = :alt, `caption` = :caption, `updated_at` = CURRENT_TIMESTAMP, `created_by` = :created_by,
@@ -98,6 +146,29 @@ class Slider
     }
     
 
+
+    public function destroy($id = null)
+    { //completely removed
+        if (empty($id)) {
+            return;
+        }
+
+        foreach ($this->data as $key => $slide) {
+            if ($slide->id == $id) {
+                break;
+            }
+        }
+        // dd($key); to be deleted
+
+        unset($this->data[$key]);
+        //reindexing the array
+        $this->data = array_values($this->data);
+
+        //array_splice($slides, $key, 1); // it reindexes
+        //$data_slides = json_encode($slides);
+
+        return $this->insert();
+    }
 
     public function delete($id)
     {
@@ -126,6 +197,7 @@ class Slider
 
     public function last_highest_id()
     {
+
         $curentUniqueId = null;
 
         if (count($this->data) > 0) {
@@ -142,53 +214,89 @@ class Slider
         } else {
             $curentUniqueId = 1;
         }
+
         return $curentUniqueId;
     }
 
     private function prepare($slider)
     {
+
         if (is_null($slider->id) || empty($slider->id)) {
             $slider->id = $this->last_highest_id();
         }
+
         if (is_null($slider->uuid) || empty($slider->uuid)) {
             $slider->uuid = uniqid();
         }
+
         return $slider;
     }
 
 
+    private function insert()
+    {
+
+        $datafile = Config::datasource() . "slideritems.json";
+        if (file_exists($datafile)) {
+            file_put_contents($datafile, json_encode($this->data));
+            return true;
+        } else {
+            echo "File not found";
+            return false;
+        }
+    }
+
     public function find($id = null)
     {
         if (is_null($id) || empty($id)) {
-            return null;
+            return true;
         }
-
-        $stmt = $this->conn->prepare('SELECT * FROM sliders WHERE id = ?');
-        $stmt->bindParam(1, $id, \PDO::PARAM_INT);
-        $stmt->execute();
-
-        $sliderData = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if ($sliderData) {
-            $slider = new Slider();
-            $slider->id = $sliderData['id'];
-            $slider->alt = $sliderData['alt'];
-            $slider->title = $sliderData['title'];
-            $slider->caption = $sliderData['caption'];
-            $slider->src = $sliderData['src'];
-
-            return $slider;
+        $slide = null;
+        foreach ($this->data as $aslide) {
+            if ($aslide->id == $id) {
+                $slide = $aslide;
+                break;
+            }
         }
-        return null; // Return null if the slider with the provided ID is not found
+        return $slide;
     }
 
-    public function findAll() { }
+
+    public function find2($id = null)
+{
+    if (is_null($id) || empty($id)) {
+        return null;
+    }
+
+    $stmt = $this->conn->prepare('SELECT * FROM sliders WHERE id = ?');
+    $stmt->bindParam(1, $id, \PDO::PARAM_INT);
+    $stmt->execute();
+
+    $sliderData = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+    if ($sliderData) {
+        $slider = new Slider();
+        $slider->id = $sliderData['id'];
+        $slider->alt = $sliderData['alt'];
+        $slider->title = $sliderData['title'];
+        $slider->caption = $sliderData['caption'];
+        $slider->src = $sliderData['src'];
+
+        return $slider;
+    }
+
+    return null; // Return null if the slider with the provided ID is not found
+}
+
+    public function findAll()
+    {
+    }
 
     private function connectdb()
     {     
-        try {   
-            $this->conn = new \PDO('mysql:host=' . Config::DB_HOST . ';dbname=' . 
-            Config::DB_NAME . ';charset=utf8', Config::DB_USER, Config::DB_PASSWORD);
+        try {
+            
+                $this->conn = new \PDO('mysql:host=' . Config::DB_HOST . ';dbname=' . Config::DB_NAME . ';charset=utf8', Config::DB_USER, Config::DB_PASSWORD);
         } catch (\PDOException $e) {
             // If there is an error with the connection, stop the script and display the error.
             echo $e->getMessage();

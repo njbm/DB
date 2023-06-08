@@ -1,8 +1,11 @@
 <?php include_once($_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR.'config.php') ?>
 
 <?php
-$dataSlides=file_get_contents($datasource. 'slideritems.json');
-$slides= json_decode($dataSlides);
+	use \BITM\SEIP12\Slider;
+
+	$slider = new Slider();
+	// $slides = $slider->index();
+	$slides = $slider->index2();
 
 
 ?>

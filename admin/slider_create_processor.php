@@ -28,11 +28,13 @@ $slider->updated_by = "created-sdf";
 $slider->uuid = Utility::uuid();
 
 if(Config::$driver == 'mysql'){
-    $result = $slider->store2($slider);
+    $result = $slider->store($slider);
 }elseif(Config::$driver == 'json'){
     $result = $slider->store($slider);
 }
 if ($result) {
+    $message = "Data is Created Successfully";
+    set_session('message',$message);
     redirect("slider_index.php");
 } else {
     echo "Data is not stored";

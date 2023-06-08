@@ -4,7 +4,7 @@
 
 	$slider = new Slider();
 	// $slides = $slider->index();
-	$slides = $slider->index2();
+	$slides = $slider->index();
 ?>
 
 

@@ -50,7 +50,8 @@ if(!Validator::empty($id)){
 		
     <div class="card-group mb-6">
 					<div class="card shadow-0 border-0">
-						<img class="card-img-top img-fluid" src="<?=$webroot.'uploads/'.$slide->src?>" alt="<?=$slide->alt?>">
+						<img class="card-img-top img-fluid" src="<?=$webroot.'uploads/'.$slide->src?>" 
+						alt="<?=$slide->alt?>">
 
 						<div class="card-body">
 							<h5 class="card-title"><?=$slide->title?></h5>
